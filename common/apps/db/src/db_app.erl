@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc common public API
+%% @doc db public API
 %% @end
 %%%-------------------------------------------------------------------
 
--module(common_app).
+-module(db_app).
 
 -behaviour(application).
 
@@ -17,15 +17,8 @@
     {ok, pid()}.
 
 start(_StartType, _StartArgs) ->
-    Dispatch = cowboy_router:compile([
-        {'_', [
-            {"/[:id]", users_api, []}
-        ]}
-    ]),
-    {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-        env => #{dispatch => Dispatch}
-    }),
-    common_sup:start_link().
+    % db:init_mnesia([node()]),
+    db_sup:start_link().
 
 %%--------------------------------------------------------------------
 -spec stop(_) ->

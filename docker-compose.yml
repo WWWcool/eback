@@ -24,6 +24,9 @@ services:
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
   common:
     build: ./common/
+    hostname: common
+    volumes:
+      - ./mnesia:/opt/common/db_data
     networks:
      - local
 

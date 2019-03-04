@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc common public API
+%% @doc json_proto public API
 %% @end
 %%%-------------------------------------------------------------------
 
--module(common_app).
+-module(json_proto_app).
 
 -behaviour(application).
 
@@ -17,15 +17,7 @@
     {ok, pid()}.
 
 start(_StartType, _StartArgs) ->
-    Dispatch = cowboy_router:compile([
-        {'_', [
-            {"/[:id]", users_api, []}
-        ]}
-    ]),
-    {ok, _} = cowboy:start_clear(http, [{port, 8080}], #{
-        env => #{dispatch => Dispatch}
-    }),
-    common_sup:start_link().
+    json_proto_sup:start_link().
 
 %%--------------------------------------------------------------------
 -spec stop(_) ->

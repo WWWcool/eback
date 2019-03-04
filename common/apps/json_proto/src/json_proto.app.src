@@ -1,14 +1,12 @@
-{application, common,
+{application, json_proto,
  [{description, "An OTP application"},
   {vsn, "0.1.0"},
   {registered, []},
-  {mod, { common_app, []}},
+  {mod, { json_proto_app, []}},
   {applications,
    [kernel,
     stdlib,
-    cowboy,
-    json_proto,
-    db
+    jiffy
    ]},
   {env,[]},
   {modules, []},

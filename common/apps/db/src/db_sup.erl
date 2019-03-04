@@ -1,9 +1,9 @@
 %%%-------------------------------------------------------------------
-%% @doc common top level supervisor.
+%% @doc db top level supervisor.
 %% @end
 %%%-------------------------------------------------------------------
 
--module(common_sup).
+-module(db_sup).
 
 -behaviour(supervisor).
 
@@ -36,7 +36,14 @@ start_link() ->
     {ok, {supervisor:sup_flags(), [supervisor:child_spec()]}}.
 
 init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+    Flags = #{strategy => one_for_all},
+%    ProtoChild = #{id     => db,
+%                 start  => {db, start_link, []},
+%                 restart    => permanent,
+%                 shutdown   => 2000,
+%                 type   => worker,
+%                 modules    => [db]},
+    {ok, {Flags, []}}.
 
 %%====================================================================
 %% Internal functions
