@@ -17,7 +17,7 @@
     {ok, pid()}.
 
 start(_StartType, _StartArgs) ->
-    % db:init_mnesia([node()]),
+    db:init_mnesia([node()]),
     db_sup:start_link().
 
 %%--------------------------------------------------------------------

@@ -1,4 +1,4 @@
--module(db_SUITE).
+-module(users_SUITE).
 
 -include_lib("common_test/include/ct.hrl").
 
@@ -11,10 +11,10 @@
 -export([init_per_testcase/2]).
 -export([end_per_testcase/2]).
 
--export([write_ok/1]).
+-export([add_ok/1]).
 -export([read_ok/1]).
--export([delete_ok/1]).
 -export([update_ok/1]).
+-export([delete_ok/1]).
 
 %%
 
@@ -27,7 +27,7 @@
 
 all() ->
     [
-        write_ok,
+        add_ok,
         read_ok,
         update_ok,
         delete_ok
@@ -45,13 +45,14 @@ init_per_suite(C) ->
     application:start(db),
     ID = unique(),
     ok = check_id(ID),
-    test_case_name(init, [{test_id, ID} | C]).
+    User = make_user(ID),
+    test_case_name(init, [{test_user, User}, {test_id, ID} | C]).
 
 -spec end_per_suite(config()) -> _.
 
 end_per_suite(C) ->
     ID = ?config(test_id, C),
-    ok = db:delete_row(ID),
+    ok = users:delete(#{id => ID}),
     ok = check_id(ID),
     application:stop(db),
     application:stop(mnesia).
@@ -83,31 +84,32 @@ end_per_testcase(_Name, _C) ->
 
 %%
 
--spec write_ok(config()) -> test_return().
-write_ok(C) ->
-    ID = ?config(test_id, C),
-    Data = #{id => ID},
-    {ok, Data} = db:add_row(ID, Data),
+-spec add_ok(config()) -> test_return().
+add_ok(C) ->
+    User = ?config(test_user, C),
+    Data = #{user => User},
+    {ok, User} = users:add(Data),
     ok.
 
 -spec read_ok(config()) -> test_return().
 read_ok(C) ->
-    ID = ?config(test_id, C),
-    Data = #{id => ID},
-    {ok, Data} = db:get_row(ID),
+    Data = #{id => ?config(test_id, C)},
+    User = ?config(test_user, C),
+    {ok, User} = users:read(Data),
     ok.
 
 -spec update_ok(config()) -> test_return().
 update_ok(C) ->
     ID = ?config(test_id, C),
-    Data = #{id => ID, some_data => test_data},
-    {ok, Data} = db:update_row(ID, Data),
+    User = ?config(test_user, C),
+    NewUser = User#{lvl_ok := <<"OK">>},
+    Data = #{id => ID, user => NewUser},
+    {ok, NewUser} = users:update(Data),
     ok.
 
 -spec delete_ok(config()) -> test_return().
 delete_ok(C) ->
-    ID = ?config(test_id, C),
-    ok = db:delete_row(ID).
+    ok = users:delete(#{id => ?config(test_id, C)}).
 
 -spec unique() -> binary().
 
@@ -147,12 +149,34 @@ test_case_name(Name, C) ->
     lists:keystore(Key, 1, C, {Key, Value}).
 
 check_id(ID) ->
-    case db:get_row(ID) of
+    case users:read(#{id => ID}) of
         {ok, _} ->
             {error, already_exist};
-        {error, transaction_abort} ->
+        {error, <<"transaction abort">>} ->
             {error, db_fail};
-        {error, not_found} ->
+        {error, <<"user not found">>} ->
             ok
     end.
 
+-define(STRING, <<"TEST">>).
+
+make_user(ID) ->
+    #{
+        id              => ID,
+        lvl_ok          => ?STRING,
+        all_ok          => ?STRING,
+        hint_fstep      => ?STRING,
+        hint_back       => ?STRING,
+        live_count      => ?STRING,
+        live_time       => ?STRING,
+        price_time      => ?STRING,
+        game_time       => ?STRING,
+        game_points     => ?STRING,
+        game_lvl_try    => ?STRING,
+        sound           => ?STRING,
+        music           => ?STRING,
+        reserve_1       => ?STRING,
+        reserve_2       => ?STRING,
+        reserve_3       => ?STRING,
+        reserve_4       => ?STRING
+    }.

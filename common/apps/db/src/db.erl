@@ -3,6 +3,8 @@
 -export([init_mnesia/1]).
 -export([add_row/2]).
 -export([get_row/1]).
+-export([update_row/2]).
+-export([delete_row/1]).
 
 -record(data_row, {
     id              :: id(),
@@ -10,9 +12,7 @@
 }).
 
 -type id()          :: binary().
--type data()        :: #{
-    id := id()
-}.
+-type data()        :: map().
 -type row()         :: #data_row{}.
 
 -export_type([data/0]).
@@ -29,7 +29,7 @@ init_mnesia(Nodes) ->
     Result = mnesia:create_schema(Nodes),
     io:format("db | creating mnesia schema in nodes - ~p with res - ~p~n", [Nodes, Result]),
     io:format("db | mnesia schema in dir (~p:~p) ~n", [mnesia:system_info(directory), application:get_env(mnesia, dir)]),
-    application:start(mnesia),
+    ok = application:start(mnesia),
     CreateTableResult = mnesia:create_table(data_row,
         [{attributes, record_info(fields, data_row)},
         {disc_copies, Nodes}]),
@@ -53,18 +53,53 @@ init_mnesia(Nodes) ->
     % application:stop(mnesia),
     % io:format("db | test end...~n").
 
--spec add_row(id(), map()) ->
-    transaction_abort | ok.
+-spec add_row(id(), data()) ->
+    {error, transaction_abort} | {ok, data()}.
 add_row(ID, Data) ->
     F = fun() ->
         mnesia:write(#data_row{id = ID, data = Data})
     end,
-    mnesia:activity(transaction, F).
+    case mnesia:activity(transaction, F) of
+        transaction_abort ->
+            {error, transaction_abort};
+        ok ->
+            {ok, Data}
+    end.
 
--spec get_row(map()) ->
-    transaction_abort | list(row()).
+-spec get_row(id()) ->
+    {error, transaction_abort | not_found} | {ok, data()}.
 get_row(ID) ->
     F = fun() ->
         mnesia:read({data_row, ID})
     end,
-    mnesia:activity(transaction, F).
+    case mnesia:activity(transaction, F) of
+        transaction_abort ->
+            {error, transaction_abort};
+        [] ->
+            {error, not_found};
+        [Data | _Rest] ->
+            {ok, Data#data_row.data}
+    end.
+
+-spec update_row(id(), data()) ->
+    {ok, data()} | {error, transaction_abort}.
+update_row(ID, Data) ->
+    case get_row(ID) of
+        {error, _} = Error->
+            Error;
+        {ok, _} ->
+            add_row(ID, Data)
+    end.
+
+-spec delete_row(id()) ->
+    {error, transaction_abort} | ok.
+delete_row(ID) ->
+    F = fun() ->
+        mnesia:delete({data_row, ID})
+    end,
+    case mnesia:activity(transaction, F) of
+        transaction_abort ->
+            {error, transaction_abort};
+        Result ->
+            Result
+    end.

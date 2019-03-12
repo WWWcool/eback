@@ -5,7 +5,7 @@ COPY ./ /build
 WORKDIR /build
 
 RUN rebar3 compile
-# RUN rebar3 do eunit, ct
+RUN rebar3 do eunit, ct
 
 RUN rm -rf _build/default/rel
 RUN rebar3 release

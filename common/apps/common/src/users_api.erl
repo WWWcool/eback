@@ -1,21 +1,25 @@
 -module(users_api).
 
 -export([init/2]).
+-export([process_req/2]).
 
--spec init(cowboy:req(), _) ->
-    {ok, cowboy:req(), _}.
+-spec init(cowboy_req:req(), _) ->
+    {ok, cowboy_req:req(), _}.
 
 init(Req0, Opts) ->
     Method = cowboy_req:method(Req0),
     Req = process_req(Method, Req0),
     {ok, Req, Opts}.
 
+-spec process_req(binary(), cowboy_req:req()) ->
+    cowboy_req:req().
+
 process_req(<<"POST">>, Req) ->
     process_if_ok(
         [
             {user, fun try_get_user/3}
         ],
-        fun dummy_fun/0,
+        fun users:add/1,
         #{},
         Req
     );
@@ -24,7 +28,7 @@ process_req(<<"GET">>, Req) ->
         [
             {id, fun try_get_id/3}
         ],
-        fun dummy_fun/0,
+        fun users:read/1,
         #{},
         Req
     );
@@ -34,7 +38,7 @@ process_req(<<"PUT">>, Req) ->
             {id, fun try_get_id/3},
             {user, fun try_get_user/3}
         ],
-        fun dummy_fun/0,
+        fun users:update/1,
         #{},
         Req
     );
@@ -43,7 +47,7 @@ process_req(<<"DELETE">>, Req) ->
         [
             {id, fun try_get_id/3}
         ],
-        fun dummy_fun/0,
+        fun users:delete/1,
         #{},
         Req
     );
@@ -90,13 +94,12 @@ process_if_ok([{Key, CheckFun} | Rest], Fun, Params, Req) ->
             bad_request(Reason, Req)
     end.
 
+handle_process_result(ok, Req) ->
+    cowboy_req:reply(200, #{}, <<"">>, Req);
 handle_process_result({ok, Result}, Req) ->
-    cowboy_req:reply(200, [], json_proto:encode(Result), Req);
+    cowboy_req:reply(200, #{}, json_proto:encode(Result), Req);
 handle_process_result({error, Reason}, Req) ->
-    cowboy_req:reply(400, [], Reason, Req).
-
-dummy_fun() ->
-    ok.
+    cowboy_req:reply(400, #{}, Reason, Req).
 
 bad_request(Reason, Req) ->
-    cowboy_req:reply(400, [], Reason, Req).
+    cowboy_req:reply(400, #{}, Reason, Req).
