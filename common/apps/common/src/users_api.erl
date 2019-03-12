@@ -7,6 +7,7 @@
     {ok, cowboy_req:req(), _}.
 
 init(Req0, Opts) ->
+    io:format("users_api | new req - ~p~n", [Req0]),
     Method = cowboy_req:method(Req0),
     Req = process_req(Method, Req0),
     {ok, Req, Opts}.
@@ -71,17 +72,17 @@ try_get_user(Key, Params, Req) ->
         false ->
             {error, <<"Missing body.">>};
         _ ->
-            {ok, BodyVals, _Req} = cowboy_req:read_urlencoded_body(Req),
-            try_get_user_(Key, Params, BodyVals)
+            {ok, [{BodyVals, true} | _Rest], _Req} = cowboy_req:read_urlencoded_body(Req),
+            try_get_user_(Key, Params, json_proto:decode(BodyVals))
     end.
 
 try_get_user_(Key, Params, ReqVals) ->
-    case proplists:get_value(<<"user">>, ReqVals, undefined) of
+    io:format("users_api | got user vals - ~p~n", [ReqVals]),
+    case maps:get(<<"user">>, ReqVals, undefined) of
         undefined ->
-           {error, <<"Missing user data in body.">>};
+            {error, <<"Missing user data in body.">>};
         User ->
-            Data = json_proto:decode(User),
-            {ok, Params#{Key => Data}}
+            {ok, Params#{Key => User}}
     end.
 
 process_if_ok([], Fun, Params, Req) ->

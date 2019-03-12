@@ -30,7 +30,7 @@
 -spec add(#{user := user()}) ->
     {ok, user()} | {error, binary()}.
 
-add(#{user := User = #{id := ID}}) ->
+add(#{user := User = #{<<"id">> := ID}}) ->
     unwrap_db_result(db:add_row(ID, User)).
 
 -spec read(#{id := id()}) ->
@@ -42,7 +42,7 @@ read(#{id := ID}) ->
 -spec update(#{id := id(), user := user()}) ->
     {ok, user()} | {error, binary()}.
 
-update(#{id := ID, user := User = #{id := ID}}) ->
+update(#{id := ID, user := User = #{<<"id">> := ID}}) ->
     unwrap_db_result(db:update_row(ID, User)).
 
 -spec delete(#{id := id()}) ->
