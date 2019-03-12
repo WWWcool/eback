@@ -102,7 +102,7 @@ read_ok(C) ->
 update_ok(C) ->
     ID = ?config(test_id, C),
     User = ?config(test_user, C),
-    NewUser = User#{lvl_ok := <<"OK">>},
+    NewUser = User#{<<"lvl_ok">> := <<"OK">>},
     Data = #{id => ID, user => NewUser},
     {ok, NewUser} = users:update(Data),
     ok.
@@ -162,21 +162,21 @@ check_id(ID) ->
 
 make_user(ID) ->
     #{
-        id              => ID,
-        lvl_ok          => ?STRING,
-        all_ok          => ?STRING,
-        hint_fstep      => ?STRING,
-        hint_back       => ?STRING,
-        live_count      => ?STRING,
-        live_time       => ?STRING,
-        price_time      => ?STRING,
-        game_time       => ?STRING,
-        game_points     => ?STRING,
-        game_lvl_try    => ?STRING,
-        sound           => ?STRING,
-        music           => ?STRING,
-        reserve_1       => ?STRING,
-        reserve_2       => ?STRING,
-        reserve_3       => ?STRING,
-        reserve_4       => ?STRING
+        <<"id">>              => ID,
+        <<"lvl_ok">>          => ?STRING,
+        <<"all_ok">>          => ?STRING,
+        <<"hint_fstep">>      => ?STRING,
+        <<"hint_back">>       => ?STRING,
+        <<"live_count">>      => ?STRING,
+        <<"live_time">>       => ?STRING,
+        <<"price_time">>      => ?STRING,
+        <<"game_time">>       => ?STRING,
+        <<"game_points">>     => ?STRING,
+        <<"game_lvl_try">>    => ?STRING,
+        <<"sound">>           => ?STRING,
+        <<"music">>           => ?STRING,
+        <<"reserve_1">>       => ?STRING,
+        <<"reserve_2">>       => ?STRING,
+        <<"reserve_3">>       => ?STRING,
+        <<"reserve_4">>       => ?STRING
     }.
