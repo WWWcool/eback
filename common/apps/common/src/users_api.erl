@@ -3,6 +3,8 @@
 -export([init/2]).
 -export([process_req/2]).
 
+-define(wrap_message(Msg), #{<<"message">> => Msg}).
+
 -spec init(cowboy_req:req(), _) ->
     {ok, cowboy_req:req(), _}.
 
@@ -67,14 +69,14 @@ process_req(<<"OPTIONS">>, Req0) ->
 process_req(_Method, Req) ->
     cowboy_req:reply(400, #{
         <<"content-type">> => <<"application/json; charset=utf-8">>
-    }, json_proto:encode(#{<<"message">> => <<"Invalid request :(">>}), Req).
+    }, json_proto:encode(?wrap_message(<<"Invalid request :(">>)), Req).
 
 %%
 
 try_get_id(Key, Params, Req) ->
     case cowboy_req:binding(id, Req, undefined) of
         undefined ->
-            {error, #{<<"message">> => <<"Missing id.">>}};
+            {error, ?wrap_message(<<"Missing id.">>)};
         ID ->
             {ok, Params#{Key => ID}}
     end.
@@ -82,7 +84,7 @@ try_get_id(Key, Params, Req) ->
 try_get_user(Key, Params, Req) ->
     case cowboy_req:has_body(Req) of
         false ->
-            {error, #{<<"message">> => <<"Missing body.">>}};
+            {error, ?wrap_message(<<"Missing body.">>)};
         _ ->
             {ok, [{BodyVals, true} | _Rest], _Req} = cowboy_req:read_urlencoded_body(Req),
             try_get_user_(Key, Params, json_proto:decode(BodyVals))
@@ -92,7 +94,7 @@ try_get_user_(Key, Params, ReqVals) ->
     io:format("users_api | got user vals - ~p~n", [ReqVals]),
     case maps:get(<<"user">>, ReqVals, undefined) of
         undefined ->
-            {error, #{<<"message">> => <<"Missing user data in body.">>}};
+            {error, ?wrap_message(<<"Missing user data in body.">>)};
         User ->
             {ok, Params#{Key => User}}
     end.
@@ -111,10 +113,15 @@ handle_process_result(ok, Req) ->
     cowboy_req:reply(200, #{}, <<"">>, Req);
 handle_process_result({ok, Result}, Req) ->
     cowboy_req:reply(200, #{
-            <<"content-type">> => <<"application/json; charset=utf-8">>
-        }, json_proto:encode(Result), Req);
+        <<"content-type">> => <<"application/json; charset=utf-8">>
+    }, json_proto:encode(Result), Req);
 handle_process_result({error, Reason}, Req) ->
-    cowboy_req:reply(400, #{}, json_proto:encode(Reason), Req).
+    cowboy_req:reply(400, #{
+        <<"content-type">> => <<"application/json; charset=utf-8">>
+    }, json_proto:encode(?wrap_message(Reason)), Req).
 
 bad_request(Reason, Req) ->
-    cowboy_req:reply(400, #{}, Reason, Req).
+    io:format("users_api | bad_request - ~p~n", [Reason]),
+    cowboy_req:reply(400, #{
+            <<"content-type">> => <<"application/json; charset=utf-8">>
+        }, json_proto:encode(?wrap_message(Reason)), Req).
