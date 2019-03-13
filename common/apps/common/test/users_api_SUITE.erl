@@ -106,9 +106,9 @@ check_user_encode_data(ID, Data) ->
     end.
 
 make_json_resp_data(ID) ->
-    <<"{\"message\":{\"id\":\"", ID/binary, "\",\"lvl_ok\":\"TEST\"}}">>.
+    <<"{\"id\":\"", ID/binary, "\",\"lvl_ok\":\"TEST\"}">>.
 make_swap_json_resp_data(ID) ->
-    <<"{\"message\":{\"lvl_ok\":\"TEST\",\"id\":\"", ID/binary, "\"}}">>.
+    <<"{\"lvl_ok\":\"TEST\",\"id\":\"", ID/binary, "\"}">>.
 
 make_json_user(ID) ->
     io_lib:format(<<"{
@@ -121,4 +121,3 @@ make_map_user(ID) ->
         <<"id">>              => ID,
         <<"lvl_ok">>          => ?STRING
     }.
-

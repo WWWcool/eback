@@ -15,6 +15,6 @@ decode(Json) ->
 encode({Type, Data} = Data) when is_tuple(Data) ->
     jiffy:encode(#{type => Type, data => Data});
 encode(Data) when is_map(Data) ->
-    jiffy:encode(#{message => Data});
+    jiffy:encode(Data);
 encode(Data) ->
     jiffy:encode(#{encode_error_of => Data}).

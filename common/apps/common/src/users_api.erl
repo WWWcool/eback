@@ -52,17 +52,29 @@ process_req(<<"DELETE">>, Req) ->
         #{},
         Req
     );
+process_req(<<"OPTIONS">>, Req0) ->
+    Req1 = cowboy_req:set_resp_header(<<"Allow">>, <<"OPTIONS, GET, POST, PUT, DELETE">>, Req0),
+    Req2 = cowboy_req:set_resp_header(
+        <<"Access-Control-Allow-Origin">>, cowboy_req:header(<<"origin">>, Req1), Req1),
+    Req3 = cowboy_req:set_resp_header(
+        <<"Access-Control-Allow-Methods">>, <<"OPTIONS, GET, POST, PUT, DELETE">>, Req2),
+    Req4 = cowboy_req:set_resp_header(
+        <<"Access-Control-Allow-Headers">>, <<"Accept, Accept-Encoding, Destination, Content-Type, Content-Length">>, Req3),
+    io:format("users_api | RESPONSE req - ~p~n", [Req4]),
+    cowboy_req:reply(200, #{
+        <<"content-type">> => <<"text/plain">>
+    }, <<"">>, Req4);
 process_req(_Method, Req) ->
     cowboy_req:reply(400, #{
-        <<"content-type">> => <<"text/plain">>
-    }, <<"Invalid request :( ">>, Req).
+        <<"content-type">> => <<"application/json; charset=utf-8">>
+    }, json_proto:encode(#{<<"message">> => <<"Invalid request :(">>}), Req).
 
 %%
 
 try_get_id(Key, Params, Req) ->
     case cowboy_req:binding(id, Req, undefined) of
         undefined ->
-            {error, <<"Missing id.">>};
+            {error, #{<<"message">> => <<"Missing id.">>}};
         ID ->
             {ok, Params#{Key => ID}}
     end.
@@ -70,7 +82,7 @@ try_get_id(Key, Params, Req) ->
 try_get_user(Key, Params, Req) ->
     case cowboy_req:has_body(Req) of
         false ->
-            {error, <<"Missing body.">>};
+            {error, #{<<"message">> => <<"Missing body.">>}};
         _ ->
             {ok, [{BodyVals, true} | _Rest], _Req} = cowboy_req:read_urlencoded_body(Req),
             try_get_user_(Key, Params, json_proto:decode(BodyVals))
@@ -80,7 +92,7 @@ try_get_user_(Key, Params, ReqVals) ->
     io:format("users_api | got user vals - ~p~n", [ReqVals]),
     case maps:get(<<"user">>, ReqVals, undefined) of
         undefined ->
-            {error, <<"Missing user data in body.">>};
+            {error, #{<<"message">> => <<"Missing user data in body.">>}};
         User ->
             {ok, Params#{Key => User}}
     end.
@@ -98,9 +110,11 @@ process_if_ok([{Key, CheckFun} | Rest], Fun, Params, Req) ->
 handle_process_result(ok, Req) ->
     cowboy_req:reply(200, #{}, <<"">>, Req);
 handle_process_result({ok, Result}, Req) ->
-    cowboy_req:reply(200, #{}, json_proto:encode(Result), Req);
+    cowboy_req:reply(200, #{
+            <<"content-type">> => <<"application/json; charset=utf-8">>
+        }, json_proto:encode(Result), Req);
 handle_process_result({error, Reason}, Req) ->
-    cowboy_req:reply(400, #{}, Reason, Req).
+    cowboy_req:reply(400, #{}, json_proto:encode(Reason), Req).
 
 bad_request(Reason, Req) ->
     cowboy_req:reply(400, #{}, Reason, Req).
